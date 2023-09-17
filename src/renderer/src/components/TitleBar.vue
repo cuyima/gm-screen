@@ -1,0 +1,79 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { useWsStore } from '@renderer/stores/WorkspaceStore'
+
+const store = useWsStore()
+const appTitle = ref('')
+
+onMounted(async () => {
+  appTitle.value = await window.electron.ipcRenderer.invoke('get-app-title')
+})
+
+function reload() {
+  window.electron.ipcRenderer.send('reload')
+}
+function openDevTools() {
+  window.electron.ipcRenderer.send('open-devtools')
+}
+
+async function openFolder() {
+  const args = {
+    filter: null,
+    isFile: false
+  }
+  const folders = await window.electron.ipcRenderer.invoke('open-explorer', args)
+  if (folders.canceled) return
+  store.setWorkspace(folders.filePaths[0])
+}
+</script>
+
+<template>
+  <nav class="navbar has-shadow" role="navigation">
+    <img class="icon" src="../assets/img/icon.png" />
+    <div class="navbar-item has-dropdown is-hoverable">
+      <a class="navbar-link"> Workspace </a>
+      <div class="navbar-dropdown p-0">
+        <a class="navbar-item" @click="openFolder"> Open Folder... </a>
+        <hr class="navbar-divider m-0" />
+        <a class="navbar-item is-opacity-low"> Recent 1 </a>
+      </div>
+    </div>
+    <a class="navbar-item pl-1" @click="reload">Reload</a>
+    <a class="navbar-item" @click="openDevTools">DevTools</a>
+    <a class="navbar-item app-title">
+      <span>{{ appTitle }} </span>
+      <span v-if="store.workspace" class="pl-1"> - {{ store.workspace }}</span>
+    </a>
+    <a class="navbar-item filler" />
+  </nav>
+</template>
+
+<style lang="scss" scoped>
+.filler {
+  -webkit-app-region: drag;
+  flex: 1 !important;
+}
+
+.navbar-item,
+.navbar-link {
+  padding: 0 0.75rem;
+}
+
+.icon {
+  -webkit-user-drag: none;
+  margin-left: 0.25rem;
+  margin-top: 0.15rem;
+}
+
+.app-title {
+  user-select: none;
+  position: absolute;
+  transform: translateX(50%);
+  right: 50%;
+  opacity: 50%;
+}
+
+.is-opacity-low {
+  opacity: 0.75;
+}
+</style>

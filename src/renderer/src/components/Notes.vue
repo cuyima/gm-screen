@@ -111,8 +111,4 @@ function insertTab(event: Event) {
 .textarea:not([rows]) {
   max-height: unset;
 }
-
-.level {
-  margin-bottom: 0.75rem !important;
-}
 </style>

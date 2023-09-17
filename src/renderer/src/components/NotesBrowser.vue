@@ -73,6 +73,7 @@ function selectNote(file: string) {
 }
 .file-container {
   overflow-y: scroll;
+  height: 1em;
 }
 .is-file-name {
   text-overflow: ellipsis;

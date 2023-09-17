@@ -24,7 +24,7 @@ store.$subscribe(
 )
 
 async function openNote(path: string) {
-  const fileBuffer = await window.api.readFile(store.workspace, path)
+  const fileBuffer = await window.api.readFileString(store.workspace, path)
   text.value = fileBuffer.toString()
   transformInput()
 }

@@ -1,12 +1,9 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { FileSystemAPI } from '../api'
 
 declare global {
   interface Window {
     electron: ElectronAPI
-    api: {
-      readDir(path: string): Promise<string[]>
-      pathToFileURL(path: string): string
-      readFile(path: string, file: string): Promise<Buffer>
-    }
+    api: FileSystemAPI
   }
 }

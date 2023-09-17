@@ -68,7 +68,7 @@ async function openFolder() {
 .app-title {
   user-select: none;
   position: absolute;
-  transform: translateX(50%);
+  transform: translate(50%, 10%);
   right: 50%;
   opacity: 50%;
 }

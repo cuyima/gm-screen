@@ -4,9 +4,10 @@ import showdown from 'showdown'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 const store = useWsStore()
 
-const currentNotePath = ref('')
-const text = ref('')
-const html = ref('')
+const currentNotePath = ref<string>('')
+const text = ref<string>('')
+const title = ref<string>()
+const html = ref<string>('')
 const converter = new showdown.Converter()
 const isActive = ref(false)
 const textArea = ref<HTMLDivElement>()
@@ -26,6 +27,12 @@ store.$subscribe(
 async function openNote(path: string) {
   const fileBuffer = await window.api.readFileString(store.currentWorkspace, path)
   text.value = fileBuffer.toString()
+  const index = path.lastIndexOf('.')
+  if (index != -1) {
+    title.value = path.substring(0, index)
+  } else {
+    title.value = path
+  }
   transformInput()
 }
 
@@ -43,14 +50,19 @@ function focusText() {
 function unfocusText() {
   isActive.value = false
   if (text.value != '') {
-    //todo: save document
+    saveFile()
   }
+}
+
+async function saveFile() {
+  await window.api.saveFile(store.currentWorkspace, { title: title.value, content: text.value })
 }
 
 function createNew() {
   unfocusText()
   focusText()
   text.value = ''
+  title.value = ''
   transformInput()
 }
 
@@ -73,9 +85,15 @@ function insertTab(event: Event) {
   <!-- eslint-disable vue/no-v-html -->
   <div class="box is-flex is-flex-grow-1 is-flex-direction-column mb-2">
     <div class="is-flex mb-2">
-      <input class="input is-flex-grow-1 mr-1" type="text" placeholder="Title" tabindex="0" />
+      <input
+        v-model="title"
+        class="input is-flex-grow-1 mr-1"
+        type="text"
+        placeholder="Title"
+        tabindex="0"
+      />
       <button class="button mx-1" @click="createNew">New</button>
-      <button class="button" :disabled="!isActive" @click="unfocusText">Save</button>
+      <button class="button" @click="saveFile">Save</button>
     </div>
     <textarea
       v-show="isActive"

@@ -33,6 +33,11 @@ function selectNote(file: string) {
   selected.value = file
   store.setCurrentNote(file)
 }
+
+async function deleteFile(file: string) {
+  await window.api.deleteFile(store.currentWorkspace, file)
+  fillBrowser(store.currentWorkspace)
+}
 </script>
 
 <template>
@@ -61,7 +66,8 @@ function selectNote(file: string) {
         <span class="panel-icon">
           <i class="fas fa-book"></i>
         </span>
-        <span class="is-file-name">{{ file }}</span>
+        <span class="is-file-name is-flex-grow-1 has-text-left">{{ file }}</span>
+        <a class="icon is-small trash has-text-info" @click="deleteFile(file)"><i class="fas fa-trash"></i></a>
       </a>
     </div>
   </article>
@@ -79,5 +85,12 @@ function selectNote(file: string) {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+.trash {
+  display: none;
+}
+.panel-block:hover .trash {
+  display: flex;
+  opacity: 50%;
 }
 </style>

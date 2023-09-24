@@ -8,7 +8,7 @@ export type { FileSystemAPI } from './types'
 
 export const fileSystemAPI: FileSystemAPI = {
   readFileString: async function (filePath: string, fileName: string): Promise<string> {
-    if (allowedExtensions.indexOf(path.extname(fileName).toLowerCase()) != -1) return ''
+    if (allowedExtensions.indexOf(path.extname(fileName).toLowerCase()) == -1) return ''
     try {
       return (await fs.readFile(path.join(filePath, fileName), { encoding: 'utf8' })).toString()
     } catch (err) {
@@ -21,5 +21,19 @@ export const fileSystemAPI: FileSystemAPI = {
   },
   pathToFileURL: function (path: string): string {
     return pathToFileURL(path).href
+  },
+  saveFile: async function (
+    filePath: string,
+    file: { title: string | undefined; content: string | undefined }
+  ): Promise<void> {
+    const currentDate = new Date().toISOString().replace(/[:.T]/g, '-').slice(0, -5)
+    console.log(file.title)
+    const title =
+      (file.title == undefined || file.title.trim() == '' ? currentDate : file.title) + '.md'
+    const content = file.content || ''
+    await fs.writeFile(path.join(filePath, title), content)
+  },
+  deleteFile: async function (filePath: string, fileName: string): Promise<void> {
+    await fs.rm(path.join(filePath, fileName))
   }
 }

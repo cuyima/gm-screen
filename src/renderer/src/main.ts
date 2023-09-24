@@ -4,4 +4,6 @@ import { createPinia } from 'pinia'
 import '@renderer/assets/css/style.scss'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
-createApp(App).use(createPinia().use(piniaPluginPersistedstate)).mount('#app')
+const app = createApp(App)
+app.use(createPinia().use(piniaPluginPersistedstate))
+app.mount('#app')

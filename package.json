@@ -27,6 +27,7 @@
     "bulma": "^0.9.4",
     "pdfjs-dist": "^3.10.111",
     "pinia": "^2.1.6",
+    "pinia-plugin-persistedstate": "^3.2.0",
     "showdown": "^2.1.0"
   },
   "devDependencies": {
@@ -39,7 +40,7 @@
     "@vitejs/plugin-vue": "^4.3.4",
     "@vue/eslint-config-prettier": "^8.0.0",
     "@vue/eslint-config-typescript": "^12.0.0",
-    "electron": "^26.2.1",
+    "electron": "^26.2.2",
     "electron-builder": "^24.6.4",
     "electron-vite": "^1.0.27",
     "eslint": "^8.49.0",

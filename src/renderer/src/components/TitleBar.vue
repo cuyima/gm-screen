@@ -4,10 +4,20 @@ import { useWsStore } from '@renderer/stores/WorkspaceStore'
 
 const store = useWsStore()
 const appTitle = ref('')
+const recent = ref([''])
 
 onMounted(async () => {
   appTitle.value = await window.electron.ipcRenderer.invoke('get-app-title')
+  recent.value = store.recentWorkspaces
 })
+
+store.$subscribe(
+  (_mutation, state) => {
+    if (state.recentWorkspaces == recent.value) return
+    recent.value = state.recentWorkspaces
+  },
+  { detached: true }
+)
 
 function reload() {
   window.electron.ipcRenderer.send('reload')
@@ -24,6 +34,7 @@ async function openFolder() {
   const folders = await window.electron.ipcRenderer.invoke('open-explorer', args)
   if (folders.canceled) return
   store.setWorkspace(folders.filePaths[0])
+  store.addRecentWorkspace(folders.filePaths[0])
 }
 </script>
 
@@ -35,14 +46,21 @@ async function openFolder() {
       <div class="navbar-dropdown p-0">
         <a class="navbar-item" @click="openFolder"> Open Folder... </a>
         <hr class="navbar-divider m-0" />
-        <a class="navbar-item is-opacity-low"> Recent 1 </a>
+        <a
+          v-for="ws of recent"
+          :key="ws"
+          class="navbar-item is-opacity-low"
+          @click="store.setWorkspace(ws)"
+        >
+          {{ ws }}
+        </a>
       </div>
     </div>
     <a class="navbar-item pl-1" @click="reload">Reload</a>
     <a class="navbar-item" @click="openDevTools">DevTools</a>
     <a class="navbar-item app-title">
       <span>{{ appTitle }} </span>
-      <span v-if="store.workspace" class="pl-1"> - {{ store.workspace }}</span>
+      <span v-if="store.currentWorkspace" class="pl-1"> - {{ store.currentWorkspace }}</span>
     </a>
     <a class="navbar-item filler" />
   </nav>

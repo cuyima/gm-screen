@@ -3,20 +3,20 @@ import { ref, onMounted } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 const store = useWsStore()
 
-const currentPath = ref<string>('')
-const selected = ref('')
+const currentPath = ref<string>()
+const selected = ref<string>()
 const files = ref<string[]>([])
 
 store.$subscribe(
   (_mutation, state) => {
-    if (state.workspace == currentPath.value) return
-    fillBrowser(state.workspace)
+    if (state.currentWorkspace == currentPath.value) return
+    fillBrowser(state.currentWorkspace)
   },
   { detached: true }
 )
 
 function fillBrowser(folder: string) {
-  if (store.workspace == null || store.workspace == '') return
+  if (store.currentWorkspace == null || store.currentWorkspace == '') return
   files.value.splice(0)
   window.api.readDir(folder).then((filePaths) =>
     filePaths.forEach((file) => {
@@ -26,12 +26,12 @@ function fillBrowser(folder: string) {
 }
 
 onMounted(() => {
-  fillBrowser(store.workspace)
+  fillBrowser(store.currentWorkspace)
 })
 
 function selectNote(file: string) {
   selected.value = file
-  store.setCurrentNotePath(file)
+  store.setCurrentNote(file)
 }
 </script>
 
@@ -44,7 +44,7 @@ function selectNote(file: string) {
           <i class="fas fa-search"></i>
         </span>
       </p>
-      <a class="ml-2 button is-inverted is-info" @click="fillBrowser(store.workspace)">
+      <a class="ml-2 button is-inverted is-info" @click="fillBrowser(store.currentWorkspace)">
         <span class="icon is-small">
           <i class="fas fa-sync-alt" />
         </span>

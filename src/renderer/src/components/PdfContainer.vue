@@ -1,10 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-//import PdfViewer from '@renderer/PdfViewer.vue'
+import { onMounted, ref } from 'vue'
+import { useWsStore } from '@renderer/stores/WorkspaceStore'
 
-const filePaths = ref<string[]>([])
-const selectedFile = ref('')
+//import PdfViewer from '@renderer/PdfViewer.vue'
+const store = useWsStore()
+
+const currentFiles = ref<string[]>([''])
+const selectedFile = ref<string>('')
 const tabs = ref<HTMLSpanElement>()
+
+store.$subscribe(
+  (_mutation, state) => {
+    if (state.currentFiles != currentFiles.value) currentFiles.value = state.currentFiles
+    if (state.selectedFile != selectedFile.value) selectedFile.value = state.selectedFile
+  },
+  { detached: true }
+)
+
+onMounted(() => {
+  currentFiles.value = store.currentFiles
+  selectedFile.value = store.selectedFile
+})
 
 function scroll(e: WheelEvent) {
   const tabsValue = tabs.value
@@ -19,23 +35,23 @@ function getFileName(filePath: string) {
 }
 
 function closeFile(index: number) {
-  const fPaths = filePaths.value
+  const fPaths = currentFiles.value
   const file = fPaths[index]
   fPaths.splice(index, 1)
   if (fPaths.length == 0) {
-    selectedFile.value = ''
+    store.selectedFile = ''
   }
 
-  if (file != selectedFile.value) return
+  if (file != store.selectedFile) return
 
   if (fPaths.length > index) {
-    selectedFile.value = fPaths[index]
+    store.selectedFile = fPaths[index]
   }
   if (fPaths.length == index) {
-    selectedFile.value = fPaths[index - 1]
+    store.selectedFile = fPaths[index - 1]
   }
   if (fPaths.length < index) {
-    selectedFile.value = fPaths[fPaths.length - 1]
+    store.selectedFile = fPaths[fPaths.length - 1]
   }
 }
 
@@ -47,16 +63,16 @@ async function openFile() {
   const files = await window.electron.ipcRenderer.invoke('open-explorer', args)
   if (files.canceled) return
 
-  const currentLen = filePaths.value.length
+  const currentLen = currentFiles.value.length
 
   files.filePaths.forEach((path: string) => {
     path = window.api.pathToFileURL(path)
-    if (!filePaths.value.includes(path)) filePaths.value.push(path)
+    if (!currentFiles.value.includes(path)) currentFiles.value.push(path)
   })
 
-  if (currentLen == filePaths.value.length) return
+  if (currentLen == currentFiles.value.length) return
 
-  selectedFile.value = filePaths.value[filePaths.value.length - files.filePaths.length]
+  store.selectedFile = currentFiles.value[currentFiles.value.length - files.filePaths.length]
 }
 </script>
 
@@ -67,7 +83,7 @@ async function openFile() {
       <span ref="tabs" class="tabs overflow" @wheel="scroll">
         <ul>
           <li
-            v-for="(source, index) in filePaths"
+            v-for="(source, index) in currentFiles"
             :key="source"
             :class="{ 'is-active': source === selectedFile }"
             class="is-flex is-align-items-center"

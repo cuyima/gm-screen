@@ -17,14 +17,14 @@ onMounted(() => {
 
 store.$subscribe(
   (_mutation, state) => {
-    if (state.currentNotePath == currentNotePath.value) return
-    openNote(state.currentNotePath)
+    if (state.currentNote == currentNotePath.value) return
+    openNote(state.currentNote)
   },
   { detached: true }
 )
 
 async function openNote(path: string) {
-  const fileBuffer = await window.api.readFileString(store.workspace, path)
+  const fileBuffer = await window.api.readFileString(store.currentWorkspace, path)
   text.value = fileBuffer.toString()
   transformInput()
 }

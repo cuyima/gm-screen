@@ -4,21 +4,21 @@ import showdown from 'showdown'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 const store = useWsStore()
 
-const currentNotePath = ref<string>('')
-const text = ref<string>('')
-const title = ref<string>()
-const html = ref<string>('')
-const converter = new showdown.Converter()
+const currentNote = ref<string>('')
+const noteContent = ref<string>('')
+const noteTitle = ref<string>('')
+const noteHtml = ref<string>('')
 const isActive = ref(false)
 const textArea = ref<HTMLDivElement>()
+const converter = new showdown.Converter()
 
 onMounted(() => {
-  transformInput()
+  openNote(store.currentNote)
 })
 
 store.$subscribe(
   (_mutation, state) => {
-    if (state.currentNote == currentNotePath.value) return
+    if (state.currentNote == currentNote.value) return
     openNote(state.currentNote)
   },
   { detached: true }
@@ -26,18 +26,18 @@ store.$subscribe(
 
 async function openNote(path: string) {
   const fileBuffer = await window.api.readFileString(store.currentWorkspace, path)
-  text.value = fileBuffer.toString()
+  noteContent.value = fileBuffer.toString()
   const index = path.lastIndexOf('.')
   if (index != -1) {
-    title.value = path.substring(0, index)
+    noteTitle.value = path.substring(0, index)
   } else {
-    title.value = path
+    noteTitle.value = path
   }
   transformInput()
 }
 
 function transformInput() {
-  html.value = converter.makeHtml(text.value)
+  noteHtml.value = converter.makeHtml(noteContent.value)
 }
 
 function focusText() {
@@ -49,20 +49,26 @@ function focusText() {
 
 function unfocusText() {
   isActive.value = false
-  if (text.value != '') {
+  if (noteContent.value != '') {
     saveFile()
   }
 }
 
 async function saveFile() {
-  await window.api.saveFile(store.currentWorkspace, { title: title.value, content: text.value })
+  const currentDate = new Date().toISOString().replace(/[:.T]/g, '-').slice(0, -5)
+  const title = noteTitle.value.trim() == '' ? currentDate : noteTitle.value
+  noteTitle.value = title
+  await window.api.saveFile(store.currentWorkspace, {
+    title: title + '.md',
+    content: noteContent.value
+  })
 }
 
 function createNew() {
   unfocusText()
   focusText()
-  text.value = ''
-  title.value = ''
+  noteContent.value = ''
+  noteTitle.value = ''
   transformInput()
 }
 
@@ -76,7 +82,7 @@ function insertTab(event: Event) {
     tabCharacter +
     element.value.substring(selectionEnd ?? 0)
 
-  text.value = newValue
+  noteContent.value = newValue
   element.selectionStart = element.selectionEnd = selectionStart ?? 0 + 1
 }
 </script>
@@ -86,19 +92,21 @@ function insertTab(event: Event) {
   <div class="box is-flex is-flex-grow-1 is-flex-direction-column mb-2">
     <div class="is-flex mb-2">
       <input
-        v-model="title"
-        class="input is-flex-grow-1 mr-1"
+        v-model="noteTitle"
+        class="input is-flex-grow-1 mr-2 is-family-secondary"
         type="text"
         placeholder="Title"
         tabindex="0"
       />
-      <button class="button mx-1" @click="createNew">New</button>
-      <button class="button" @click="saveFile">Save</button>
+      <button class="button" @click="createNew">
+        <span class="icon is-small"> <i class="fas fa-plus"></i></span>
+        <span class="is-family-secondary">Create</span>
+      </button>
     </div>
     <textarea
       v-show="isActive"
       ref="textArea"
-      v-model="text"
+      v-model="noteContent"
       class="textarea has-fixed-size is-flex-grow-1 content mb-0"
       placeholder="# Notes"
       @input="transformInput"
@@ -112,7 +120,7 @@ function insertTab(event: Event) {
       tabindex="0"
       @dblclick="focusText"
       @keydown="focusText"
-      v-html="html"
+      v-html="noteHtml"
     />
   </div>
 </template>

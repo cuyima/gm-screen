@@ -24,13 +24,9 @@ export const fileSystemAPI: FileSystemAPI = {
   },
   saveFile: async function (
     filePath: string,
-    file: { title: string | undefined; content: string | undefined }
+    file: { title: string; content: string }
   ): Promise<void> {
-    const currentDate = new Date().toISOString().replace(/[:.T]/g, '-').slice(0, -5)
-    console.log(file.title)
-    const title =
-      (file.title == undefined || file.title.trim() == '' ? currentDate : file.title) + '.md'
-    const content = file.content || ''
+    const { title, content } = file
     await fs.writeFile(path.join(filePath, title), content)
   },
   deleteFile: async function (filePath: string, fileName: string): Promise<void> {

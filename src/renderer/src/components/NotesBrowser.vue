@@ -1,24 +1,30 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 const store = useWsStore()
 
 const currentPath = ref<string>()
 const selected = ref<string>()
 const files = ref<string[]>([])
+const searchString = ref<string>('')
+const filteredFiles = computed(() =>
+  files.value.filter((str) => {
+    return str.toLowerCase().includes(searchString.value)
+  })
+)
 
 store.$subscribe(
   (_mutation, state) => {
     if (state.currentWorkspace == currentPath.value) return
-    fillBrowser(state.currentWorkspace)
+    fillBrowser()
   },
   { detached: true }
 )
 
-function fillBrowser(folder: string) {
+function fillBrowser() {
   if (store.currentWorkspace == null || store.currentWorkspace == '') return
   files.value.splice(0)
-  window.api.readDir(folder).then((filePaths) =>
+  window.api.readDir(store.currentWorkspace).then((filePaths) =>
     filePaths.forEach((file) => {
       files.value.push(file)
     })
@@ -26,7 +32,7 @@ function fillBrowser(folder: string) {
 }
 
 onMounted(() => {
-  fillBrowser(store.currentWorkspace)
+  fillBrowser()
 })
 
 function selectNote(file: string) {
@@ -36,7 +42,7 @@ function selectNote(file: string) {
 
 async function deleteFile(file: string) {
   await window.api.deleteFile(store.currentWorkspace, file)
-  fillBrowser(store.currentWorkspace)
+  fillBrowser()
 }
 </script>
 
@@ -44,20 +50,27 @@ async function deleteFile(file: string) {
   <article class="panel is-flex is-flex-direction-column">
     <div class="panel-block">
       <p class="control has-icons-left">
-        <input class="input" type="text" placeholder="Search" />
+        <input v-model="searchString" class="input" type="text" placeholder="Search" />
         <span class="icon is-left">
           <i class="fas fa-search"></i>
         </span>
+        <span class="icon is-right clear pr-2">
+          <button
+            v-if="searchString != ''"
+            class="delete is-small"
+            @click="searchString = ''"
+          ></button>
+        </span>
       </p>
-      <a class="ml-2 button is-inverted is-info" @click="fillBrowser(store.currentWorkspace)">
+      <a class="ml-2 button is-inverted is-info" @click="fillBrowser">
         <span class="icon is-small">
-          <i class="fas fa-sync-alt" />
+          <i class="fas fa-sync" />
         </span>
       </a>
     </div>
     <div class="file-container is-flex-grow-1">
       <a
-        v-for="file of files"
+        v-for="file of filteredFiles"
         :key="file"
         class="panel-block py-1"
         :class="{ 'is-active': file === selected }"
@@ -67,7 +80,9 @@ async function deleteFile(file: string) {
           <i class="fas fa-book"></i>
         </span>
         <span class="is-file-name is-flex-grow-1 has-text-left">{{ file }}</span>
-        <a class="icon is-small trash has-text-info" @click="deleteFile(file)"><i class="fas fa-trash"></i></a>
+        <a class="icon is-small trash has-text-info" @click="deleteFile(file)">
+          <i class="fas fa-trash"></i>
+        </a>
       </a>
     </div>
   </article>
@@ -92,5 +107,32 @@ async function deleteFile(file: string) {
 .panel-block:hover .trash {
   display: flex;
   opacity: 50%;
+}
+
+.clear {
+  right: 0;
+  z-index: auto !important;
+  pointer-events: auto !important;
+  width: 1.5rem !important;
+}
+
+.fa-sync {
+  color: rgba(10, 10, 10, 0.2);
+}
+.refresh {
+  background-color: unset;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  display: inline-block;
+  flex-grow: 0;
+  flex-shrink: 0;
+  outline: none;
+  position: relative;
+  vertical-align: top;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
 }
 </style>

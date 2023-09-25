@@ -40,7 +40,7 @@ function getImgUrl(die: number) {
     <div class="columns">
       <input
         v-model="number"
-        class="column input has-text-centered is-flex"
+        class="column input has-text-centered is-flex is-family-secondary"
         placeholder="1"
         :class="isInvalid ? 'is-danger' : ''"
       />
@@ -49,7 +49,7 @@ function getImgUrl(die: number) {
       </a>
     </div>
     <div class="container notification">
-      <div class="text subtitle">{{ dieResult }}</div>
+      <div class="text subtitle is-family-secondary">{{ dieResult }}</div>
     </div>
   </div>
 </template>

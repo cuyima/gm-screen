@@ -79,7 +79,7 @@ async function openFile() {
 <template>
   <div class="box is-fluid is-flex is-flex-grow-1 is-flex-direction-column">
     <div class="is-flex mb-2">
-      <button class="button mr-1 p-2 is-outlined" @click="openFile()">Open File</button>
+      <button class="button mr-1 p-2 is-family-secondary" @click="openFile">Open File</button>
       <span ref="tabs" class="tabs overflow" @wheel="scroll">
         <ul>
           <li

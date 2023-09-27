@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
+import Modal from './Modal.vue'
 const store = useWsStore()
 
 const currentPath = ref<string>()
 const selected = ref<string>()
 const files = ref<string[]>([])
+const fileToDelete = ref<string>('')
 const searchString = ref<string>('')
 const filteredFiles = computed(() =>
   files.value.filter((str) => {
@@ -42,6 +44,7 @@ function selectNote(file: string) {
 
 async function deleteFile(file: string) {
   await window.api.deleteFile(store.currentWorkspace, file)
+  fileToDelete.value = ''
   fillBrowser()
 }
 </script>
@@ -79,13 +82,20 @@ async function deleteFile(file: string) {
         <span class="panel-icon">
           <i class="fas fa-book"></i>
         </span>
-        <span class="is-file-name is-flex-grow-1 has-text-left">{{ file }}</span>
-        <a class="icon is-small trash has-text-info" @click="deleteFile(file)">
+        <span class="is-file-name is-flex-grow-1">{{ file }}</span>
+        <a class="icon is-small trash has-text-info" @click="fileToDelete = file">
           <i class="fas fa-trash"></i>
         </a>
       </a>
     </div>
   </article>
+  <Modal
+    v-if="fileToDelete != ''"
+    :title="`Are you sure you want to delete '${fileToDelete}'?`"
+    :message="'This action can not be undone.'"
+    @confirm="deleteFile(fileToDelete)"
+    @cancel="fileToDelete = ''"
+  />
 </template>
 
 <style scoped>
@@ -134,5 +144,9 @@ async function deleteFile(file: string) {
   align-content: center;
   align-items: center;
   justify-content: center;
+}
+
+.panel:not(:last-child) {
+  margin-bottom: 0px;
 }
 </style>

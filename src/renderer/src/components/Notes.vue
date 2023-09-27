@@ -126,10 +126,6 @@ function insertTab(event: Event) {
 </template>
 
 <style scoped>
-.box {
-  text-align: left;
-}
-
 .textarea {
   overflow: scroll;
 }

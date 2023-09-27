@@ -48,7 +48,7 @@ function getImgUrl(die: number) {
         <img :src="getImgUrl(die)" />
       </a>
     </div>
-    <div class="container notification">
+    <div class="container notification has-text-centered">
       <div class="text subtitle is-family-secondary">{{ dieResult }}</div>
     </div>
   </div>

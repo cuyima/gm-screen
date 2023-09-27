@@ -4,7 +4,7 @@ import { useWsStore } from '@renderer/stores/WorkspaceStore'
 import Modal from './Modal.vue'
 const store = useWsStore()
 
-const currentPath = ref<string>()
+const currentPath = ref<string>('')
 const selected = ref<string>()
 const files = ref<string[]>([])
 const fileToDelete = ref<string>('')
@@ -17,15 +17,18 @@ const filteredFiles = computed(() =>
 
 store.$subscribe(
   (_mutation, state) => {
-    if (state.currentWorkspace == currentPath.value) return
-    fillBrowser()
+    if (state.currentWorkspace != currentPath.value) {
+      fillBrowser()
+      window.electron.ipcRenderer.send('select-directory', currentPath.value)
+    }
   },
   { detached: true }
 )
 
 function fillBrowser() {
   if (store.currentWorkspace == null || store.currentWorkspace == '') return
-  files.value.splice(0)
+  currentPath.value = store.currentWorkspace
+  files.value = []
   window.api.readDir(store.currentWorkspace).then((filePaths) =>
     filePaths.forEach((file) => {
       files.value.push(file)
@@ -33,8 +36,14 @@ function fillBrowser() {
   )
 }
 
+window.electron.ipcRenderer.on('directory-change-notification', () => {
+  fillBrowser()
+})
+
 onMounted(() => {
   fillBrowser()
+  if (currentPath.value != undefined)
+    window.electron.ipcRenderer.send('select-directory', currentPath.value)
 })
 
 function selectNote(file: string) {
@@ -45,7 +54,7 @@ function selectNote(file: string) {
 async function deleteFile(file: string) {
   await window.api.deleteFile(store.currentWorkspace, file)
   fileToDelete.value = ''
-  fillBrowser()
+  if (store.currentNote == file) store.setCurrentNote('')
 }
 </script>
 
@@ -144,9 +153,5 @@ async function deleteFile(file: string) {
   align-content: center;
   align-items: center;
   justify-content: center;
-}
-
-.panel:not(:last-child) {
-  margin-bottom: 0px;
 }
 </style>

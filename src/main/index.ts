@@ -2,8 +2,10 @@ import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { FSWatcher, watch } from 'fs'
 
 let win: BrowserWindow
+let watcher: FSWatcher
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -89,4 +91,14 @@ ipcMain.on('open-devtools', () => {
 
 ipcMain.on('reload', () => {
   win.webContents.reload()
+})
+
+ipcMain.on('select-directory', (_event, directoryPath) => {
+  if (watcher != undefined) watcher.close()
+  watcher = watch(directoryPath, { recursive: true }, (eventType, filename) => {
+    win.webContents.send('directory-change-notification', {
+      eventType,
+      filename
+    })
+  })
 })

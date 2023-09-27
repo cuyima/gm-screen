@@ -25,6 +25,8 @@ store.$subscribe(
 )
 
 async function openNote(path: string) {
+  if (path == '') clearNote()
+  currentNote.value = path
   const fileBuffer = await window.api.readFileString(store.currentWorkspace, path)
   noteContent.value = fileBuffer.toString()
   const index = path.lastIndexOf('.')
@@ -33,6 +35,13 @@ async function openNote(path: string) {
   } else {
     noteTitle.value = path
   }
+  transformInput()
+}
+
+function clearNote() {
+  currentNote.value = ''
+  noteContent.value = ''
+  noteTitle.value = ''
   transformInput()
 }
 

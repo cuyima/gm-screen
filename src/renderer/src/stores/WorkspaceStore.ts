@@ -11,9 +11,6 @@ export const useWsStore = defineStore('workspace', {
     }
   },
   actions: {
-    setWorkspace(payload: string) {
-      this.currentWorkspace = payload
-    },
     addRecentWorkspace(payload: string) {
       if (!this.recentWorkspaces.includes(payload)) {
         this.recentWorkspaces.unshift(payload)
@@ -21,15 +18,6 @@ export const useWsStore = defineStore('workspace', {
       if (this.recentWorkspaces.length > 5) {
         this.recentWorkspaces.splice(5)
       }
-    },
-    setCurrentFile(payload: string) {
-      this.selectedFile = payload
-    },
-    setRecentFiles(payload: [string]) {
-      this.currentFiles = payload
-    },
-    setCurrentNote(payload: string) {
-      this.currentNote = payload
     }
   },
   persist: true

@@ -74,10 +74,11 @@ async function openFile() {
             :key="source"
             :class="{ 'is-active': source == selectedFile }"
             class="is-flex is-align-items-center"
-            @click="store.selectedFile = source"
           >
             <a class="px-2">
-              <span class="pr-2" @click="selectedFile = source">{{ getFileName(source) }}</span>
+              <span class="pr-2" @click="store.selectedFile = source">{{
+                getFileName(source)
+              }}</span>
               <button class="delete is-small" @click="closeFile(index)"></button>
             </a>
           </li>

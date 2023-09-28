@@ -1,23 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 
 const store = useWsStore()
 const appTitle = ref('')
-const recent = ref([''])
+const recent = computed(() => store.recentWorkspaces)
 
 onMounted(async () => {
   appTitle.value = await window.electron.ipcRenderer.invoke('get-app-title')
-  recent.value = store.recentWorkspaces
 })
-
-store.$subscribe(
-  (_mutation, state) => {
-    if (state.recentWorkspaces == recent.value) return
-    recent.value = state.recentWorkspaces
-  },
-  { detached: true }
-)
 
 function reload() {
   window.electron.ipcRenderer.send('reload')

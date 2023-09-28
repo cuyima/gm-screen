@@ -1,32 +1,27 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import showdown from 'showdown'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 const store = useWsStore()
 
-const currentNote = ref<string>('')
+const currentNote = computed(() => store.currentNote)
 const noteContent = ref<string>('')
+const noteHtml = computed(() => converter.makeHtml(noteContent.value))
 const noteTitle = ref<string>('')
-const noteHtml = ref<string>('')
 const isActive = ref(false)
 const textArea = ref<HTMLDivElement>()
 const converter = new showdown.Converter()
 
 onMounted(() => {
-  openNote(store.currentNote)
+  openNote(currentNote.value)
 })
 
-store.$subscribe(
-  (_mutation, state) => {
-    if (state.currentNote == currentNote.value) return
-    openNote(state.currentNote)
-  },
-  { detached: true }
-)
+watch(currentNote, () => {
+  openNote(currentNote.value)
+})
 
 async function openNote(path: string) {
   if (path == '') clearNote()
-  currentNote.value = path
   const fileBuffer = await window.api.readFileString(store.currentWorkspace, path)
   noteContent.value = fileBuffer.toString()
   const index = path.lastIndexOf('.')
@@ -35,18 +30,11 @@ async function openNote(path: string) {
   } else {
     noteTitle.value = path
   }
-  transformInput()
 }
 
 function clearNote() {
-  currentNote.value = ''
   noteContent.value = ''
   noteTitle.value = ''
-  transformInput()
-}
-
-function transformInput() {
-  noteHtml.value = converter.makeHtml(noteContent.value)
 }
 
 function focusText() {
@@ -56,29 +44,26 @@ function focusText() {
   })
 }
 
-function unfocusText() {
-  isActive.value = false
-  if (noteContent.value != '') {
-    saveFile()
+async function unfocusText() {
+  if (isActive.value == true) {
+    await saveFile()
   }
+  isActive.value = false
 }
 
 async function saveFile() {
   const currentDate = new Date().toISOString().replace(/[:.T]/g, '-').slice(0, -5)
   const title = noteTitle.value.trim() == '' ? currentDate : noteTitle.value
-  noteTitle.value = title
   await window.api.saveFile(store.currentWorkspace, {
     title: title + '.md',
     content: noteContent.value
   })
+  store.setCurrentNote(title + '.md')
 }
 
-function createNew() {
-  unfocusText()
-  focusText()
-  noteContent.value = ''
-  noteTitle.value = ''
-  transformInput()
+async function createNew() {
+  await saveFile()
+  openNote('')
 }
 
 function insertTab(event: Event) {
@@ -106,6 +91,7 @@ function insertTab(event: Event) {
         type="text"
         placeholder="Title"
         tabindex="0"
+        @keyup.ctrl.enter="saveFile"
       />
       <button class="button" @click="createNew">
         <span class="icon is-small"> <i class="fas fa-plus"></i></span>
@@ -118,9 +104,8 @@ function insertTab(event: Event) {
       v-model="noteContent"
       class="textarea has-fixed-size is-flex-grow-1 content mb-0"
       placeholder="# Notes"
-      @input="transformInput"
-      @keyup.ctrl.enter="unfocusText"
-      @focusout="unfocusText"
+      @keyup.ctrl.enter="unfocusText()"
+      @focusout="unfocusText()"
       @keydown.tab.prevent="insertTab"
     />
     <div

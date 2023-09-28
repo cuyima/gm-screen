@@ -95,6 +95,7 @@ ipcMain.on('reload', () => {
 
 ipcMain.on('select-directory', (_event, directoryPath) => {
   if (watcher != undefined) watcher.close()
+  if (directoryPath == '' || directoryPath == undefined) return
   watcher = watch(directoryPath, { recursive: true }, (eventType, filename) => {
     win.webContents.send('directory-change-notification', {
       eventType,

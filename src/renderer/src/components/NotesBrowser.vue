@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 import Modal from './Modal.vue'
 const store = useWsStore()
 
-const currentPath = ref<string>('')
-const selected = ref<string>()
+const currentPath = computed(() => store.currentWorkspace)
+const selected = computed(() => store.currentNote)
 const files = ref<string[]>([])
 const fileToDelete = ref<string>('')
 const searchString = ref<string>('')
@@ -15,21 +15,15 @@ const filteredFiles = computed(() =>
   })
 )
 
-store.$subscribe(
-  (_mutation, state) => {
-    if (state.currentWorkspace != currentPath.value) {
-      fillBrowser()
-      window.electron.ipcRenderer.send('select-directory', currentPath.value)
-    }
-  },
-  { detached: true }
-)
+watch(currentPath, () => {
+  fillBrowser()
+  window.electron.ipcRenderer.send('select-directory', currentPath.value)
+})
 
 function fillBrowser() {
-  if (store.currentWorkspace == null || store.currentWorkspace == '') return
-  currentPath.value = store.currentWorkspace
-  files.value = []
-  window.api.readDir(store.currentWorkspace).then((filePaths) =>
+  if (currentPath.value == null || currentPath.value == '') return
+  files.value.splice(0, files.value.length)
+  window.api.readDir(currentPath.value).then((filePaths) =>
     filePaths.forEach((file) => {
       files.value.push(file)
     })
@@ -42,19 +36,13 @@ window.electron.ipcRenderer.on('directory-change-notification', () => {
 
 onMounted(() => {
   fillBrowser()
-  if (currentPath.value != undefined)
-    window.electron.ipcRenderer.send('select-directory', currentPath.value)
+  window.electron.ipcRenderer.send('select-directory', currentPath.value)
 })
 
-function selectNote(file: string) {
-  selected.value = file
-  store.setCurrentNote(file)
-}
-
 async function deleteFile(file: string) {
-  await window.api.deleteFile(store.currentWorkspace, file)
+  await window.api.deleteFile(currentPath.value, file)
   fileToDelete.value = ''
-  if (store.currentNote == file) store.setCurrentNote('')
+  if (selected.value == file) store.setCurrentNote('')
 }
 </script>
 
@@ -85,16 +73,14 @@ async function deleteFile(file: string) {
         v-for="file of filteredFiles"
         :key="file"
         class="panel-block py-1"
-        :class="{ 'is-active': file === selected }"
-        @click="selectNote(file)"
+        :class="{ 'is-active': file == selected }"
+        @click="store.setCurrentNote(file)"
       >
         <span class="panel-icon">
           <i class="fas fa-book"></i>
         </span>
         <span class="is-file-name is-flex-grow-1">{{ file }}</span>
-        <a class="icon is-small trash has-text-info" @click="fileToDelete = file">
-          <i class="fas fa-trash"></i>
-        </a>
+        <button class="delete is-small delete-file" @click="fileToDelete = file"></button>
       </a>
     </div>
   </article>
@@ -120,12 +106,11 @@ async function deleteFile(file: string) {
   overflow: hidden;
   white-space: nowrap;
 }
-.trash {
+.delete-file {
   display: none;
 }
-.panel-block:hover .trash {
+.panel-block:hover .delete-file {
   display: flex;
-  opacity: 50%;
 }
 
 .clear {

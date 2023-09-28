@@ -123,20 +123,4 @@ async function deleteFile(file: string) {
 .fa-sync {
   color: rgba(10, 10, 10, 0.2);
 }
-.refresh {
-  background-color: unset;
-  border: none;
-  cursor: pointer;
-  pointer-events: auto;
-  display: inline-block;
-  flex-grow: 0;
-  flex-shrink: 0;
-  outline: none;
-  position: relative;
-  vertical-align: top;
-  display: flex;
-  align-content: center;
-  align-items: center;
-  justify-content: center;
-}
 </style>

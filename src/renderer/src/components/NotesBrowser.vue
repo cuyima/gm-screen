@@ -42,7 +42,7 @@ onMounted(() => {
 async function deleteFile(file: string) {
   await window.api.deleteFile(currentPath.value, file)
   fileToDelete.value = ''
-  if (selected.value == file) store.setCurrentNote('')
+  if (selected.value == file) store.currentNote = ''
 }
 </script>
 
@@ -74,7 +74,7 @@ async function deleteFile(file: string) {
         :key="file"
         class="panel-block py-1"
         :class="{ 'is-active': file == selected }"
-        @click="store.setCurrentNote(file)"
+        @click="store.currentNote = file"
       >
         <span class="panel-icon">
           <i class="fas fa-book"></i>

@@ -24,8 +24,7 @@ async function openFolder() {
   }
   const folders = await window.electron.ipcRenderer.invoke('open-explorer', args)
   if (folders.canceled) return
-  store.currentWorkspace = folders.filePaths[0]
-  store.addRecentWorkspace(folders.filePaths[0])
+  store.addWorkspace(folders.filePaths[0])
 }
 </script>
 
@@ -41,7 +40,7 @@ async function openFolder() {
           v-for="ws of recent"
           :key="ws"
           class="navbar-item is-opacity-low"
-          @click="store.currentWorkspace = ws"
+          @click="store.addWorkspace(ws)"
         >
           {{ ws }}
         </a>

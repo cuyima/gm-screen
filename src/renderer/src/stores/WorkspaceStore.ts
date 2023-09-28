@@ -11,13 +11,18 @@ export const useWsStore = defineStore('workspace', {
     }
   },
   actions: {
-    addRecentWorkspace(payload: string) {
-      if (!this.recentWorkspaces.includes(payload)) {
-        this.recentWorkspaces.unshift(payload)
+    addWorkspace(payload: string) {
+      let ws = this.recentWorkspaces
+      if (ws.includes(payload)) {
+        ws = ws.filter((item) => item != payload)
       }
-      if (this.recentWorkspaces.length > 5) {
-        this.recentWorkspaces.splice(5)
+      ws.unshift(payload)
+      if (ws.length > 5) {
+        ws.splice(5)
       }
+      this.currentWorkspace = payload
+      this.recentWorkspaces = ws
+      this.currentNote = ''
     }
   },
   persist: true

@@ -1,26 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 
 //import PdfViewer from '@renderer/PdfViewer.vue'
 const store = useWsStore()
 
-const currentFiles = ref<string[]>([''])
-const selectedFile = ref<string>('')
+const currentFiles = computed(() => store.currentFiles)
+const selectedFile = computed(() => store.selectedFile)
 const tabs = ref<HTMLSpanElement>()
-
-store.$subscribe(
-  (_mutation, state) => {
-    if (state.currentFiles != currentFiles.value) currentFiles.value = state.currentFiles
-    if (state.selectedFile != selectedFile.value) selectedFile.value = state.selectedFile
-  },
-  { detached: true }
-)
-
-onMounted(() => {
-  currentFiles.value = store.currentFiles
-  selectedFile.value = store.selectedFile
-})
 
 function scroll(e: WheelEvent) {
   const tabsValue = tabs.value
@@ -85,8 +72,9 @@ async function openFile() {
           <li
             v-for="(source, index) in currentFiles"
             :key="source"
-            :class="{ 'is-active': source === selectedFile }"
+            :class="{ 'is-active': source == selectedFile }"
             class="is-flex is-align-items-center"
+            @click="store.selectedFile = source"
           >
             <a class="px-2">
               <span class="pr-2" @click="selectedFile = source">{{ getFileName(source) }}</span>

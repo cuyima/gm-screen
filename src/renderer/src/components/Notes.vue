@@ -58,7 +58,7 @@ async function saveFile() {
     title: title + '.md',
     content: noteContent.value
   })
-  store.setCurrentNote(title + '.md')
+  store.currentNote = title + '.md'
 }
 
 async function createNew() {

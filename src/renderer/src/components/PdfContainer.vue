@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
+import PdfViewer from './PdfViewer.vue'
 
-//import PdfViewer from '@renderer/PdfViewer.vue'
 const store = useWsStore()
 
 const currentFiles = computed(() => store.currentFiles)
@@ -85,13 +85,7 @@ async function openFile() {
         </ul>
       </span>
     </div>
-    <!-- <PdfViewer :url="selectedFile" v-if="selectedFile"/> -->
-    <iframe
-      v-if="selectedFile != ''"
-      class="is-flex-grow-1"
-      :src="selectedFile + '#toolbar=0'"
-      type="application/pdf"
-    />
+    <Suspense><PdfViewer v-if="selectedFile" /></Suspense>
   </div>
 </template>
 

@@ -22,7 +22,7 @@ watch(currentPath, () => {
 
 function fillBrowser() {
   if (currentPath.value == null || currentPath.value == '') return
-  files.value.splice(0, files.value.length)
+  files.value.length = 0
   window.api.readDir(currentPath.value).then((filePaths) =>
     filePaths.forEach((file) => {
       files.value.push(file)

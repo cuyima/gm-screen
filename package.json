@@ -25,7 +25,8 @@
     "@electron-toolkit/utils": "^2.0.1",
     "@fortawesome/fontawesome-free": "^6.4.2",
     "bulma": "^0.9.4",
-    "pdfjs-dist": "3.10.111",
+    "bulma-pageloader": "^0.3.0",
+    "pdfjs-dist": "^3.11.174",
     "pinia": "^2.1.6",
     "pinia-plugin-persistedstate": "^3.2.0",
     "showdown": "^2.1.0"

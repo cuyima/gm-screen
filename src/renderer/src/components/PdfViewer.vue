@@ -3,16 +3,21 @@ import { useWsStore } from '@renderer/stores/WorkspaceStore'
 import { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 import * as pdfjsLib from 'pdfjs-dist'
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
+import { usePdfStore } from '@renderer/stores/PdfStore'
 
-const store = useWsStore()
-const selectedFile = computed(() => store.selectedFile)
+const wsStore = useWsStore()
+const pdfStore = usePdfStore()
+const selectedFile = computed(() => wsStore.selectedFile)
+const currentPage = computed(() => pdfStore.currentPage)
 const pdfContainer = ref<HTMLDivElement>()
 const pdfPages = ref<HTMLCanvasElement[]>([])
+const pdfTextLayer = ref<HTMLDivElement[]>([])
 const totalPages = ref<number>(0)
-const pages: PDFPageProxy[] = []
-const currentPage = ref<number>(0)
+const isLoaded = ref<boolean>(false)
 
+const pages: PDFPageProxy[] = []
 const visiblePages: number[] = []
+const scaleFactor = 1.5
 
 let pdf: PDFDocumentProxy
 let observer: IntersectionObserver
@@ -20,28 +25,81 @@ let observer: IntersectionObserver
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
 
-watch(selectedFile, async () => {
-  if (pdf) await pdf.destroy()
-  if (observer) observer.disconnect()
-  await loadPDF()
-  initializeIntersectionObserver()
-})
-
-onMounted(async () => {
-  if (selectedFile.value) await loadPDF()
-  initializeIntersectionObserver()
+onMounted(() => {
+  isLoaded.value = false
+  if (selectedFile.value) {
+    initialLoad()
+  } else {
+    isLoaded.value = true
+  }
 })
 
 onUnmounted(() => {
-  if (pdf) pdf.destroy()
+  if (pdf) unloadPdf()
   if (observer) observer.disconnect()
 })
 
+watch(selectedFile, async () => {
+  isLoaded.value = false
+  await unloadPdf()
+  if (selectedFile.value) {
+    initialLoad()
+  } else {
+    isLoaded.value = true
+  }
+})
+
+watch(currentPage, async () => {
+  renderPages(currentPage.value)
+})
+
+async function unloadPdf() {
+  if (pdf) await pdf.destroy()
+  if (observer) observer.disconnect()
+
+  pdfTextLayer.value.forEach((element) => {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild)
+    }
+    element.removeAttribute('style')
+  })
+
+  pdfPages.value.forEach((element) => {
+    element.removeAttribute('height')
+    element.removeAttribute('width')
+    element.removeAttribute('style')
+  })
+}
+
+async function initialLoad() {
+  loadPDF()
+    .then(() => {
+      initializeIntersectionObserver()
+      if (pdfStore.currentPage) {
+        return renderPages(pdfStore.currentPage)
+      } else {
+        return renderPages(1)
+      }
+    })
+    .then(() => {
+      isLoaded.value = true
+      let targetPage: HTMLCanvasElement
+      if (pdfStore.currentPage) {
+        targetPage = pdfPages.value[pdfStore.currentPage - 1]
+      } else {
+        targetPage = pdfPages.value[0]
+      }
+      if (targetPage) targetPage.scrollIntoView({ block: 'start' })
+    })
+}
+
 async function loadPDF() {
   const loadingTask = pdfjsLib.getDocument(selectedFile.value)
-  pdf = await loadingTask.promise
-  totalPages.value = pdf.numPages
-  await createPages()
+  loadingTask.promise.then((lt) => {
+    pdf = lt
+    totalPages.value = pdf.numPages
+    return createPages()
+  })
 }
 
 async function createPages() {
@@ -56,7 +114,7 @@ async function createPages() {
     const context = canvas.getContext('2d')
     if (!context) continue
 
-    const viewport = page.getViewport({ scale: 1.5 })
+    const viewport = page.getViewport({ scale: scaleFactor })
     canvas.height = viewport.height
     canvas.width = viewport.width
 
@@ -65,26 +123,53 @@ async function createPages() {
   }
 }
 
-async function loadPage(pageNumber: number) {
+async function renderPages(pageNumber: number) {
+  const buffer = calculateBufferRange(pageNumber)
+  await renderPagesInsideBuffer(buffer)
+  await unrenderPagesOutsideBuffer(buffer)
+}
+
+async function renderPage(pageNumber: number) {
   const page = pages[pageNumber]
   if (!page) return
 
+  console.log(`Rendering page ${pageNumber}`)
   const canvas = pdfPages.value[pageNumber - 1]
   const context = canvas.getContext('2d')
   if (!context) return
 
-  const viewport = page.getViewport({ scale: 1.5 })
+  const viewport = page.getViewport({ scale: scaleFactor })
   const renderContext = {
     canvasContext: context,
     viewport: viewport
   }
-  page.render(renderContext)
+  const renderTask = page.render(renderContext)
+
+  renderTask.promise
+    .then(() => {
+      return page.getTextContent()
+    })
+    .then((textContent) => {
+      const textLayer = pdfTextLayer.value[pageNumber - 1]
+      textLayer.style.left = canvas.offsetLeft + 'px'
+      textLayer.style.top = canvas.offsetTop + 'px'
+      textLayer.style.height = canvas.offsetHeight + 'px'
+      textLayer.style.width = canvas.offsetWidth + 'px'
+
+      return pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: textLayer,
+        viewport: viewport,
+        textDivs: []
+      })
+    })
   visiblePages.push(pageNumber)
 }
 
-async function unloadPage(pageNumber: number) {
+async function unrenderPage(pageNumber: number) {
   const page = pages[pageNumber]
   if (!page) return
+  console.log(`Unrendering page ${pageNumber}`)
   page.cleanup()
   const canvas = pdfPages.value[pageNumber]
   if (!canvas) return
@@ -105,11 +190,7 @@ function initializeIntersectionObserver() {
         const attr = page.getAttribute('data-page')
         if (!attr) return
         const pageNumber = parseInt(attr, 10)
-        currentPage.value = pageNumber
-        const bufferRange = calculateBufferRange(pageNumber)
-
-        await unloadPagesOutsideBuffer(bufferRange)
-        await loadPagesInsideBuffer(bufferRange)
+        pdfStore.currentPage = pageNumber
       })
     },
     { threshold: 0 }
@@ -127,39 +208,106 @@ function calculateBufferRange(pageNumber: number) {
   return { startPage, endPage }
 }
 
-async function unloadPagesOutsideBuffer(bufferRange: { startPage: number; endPage: number }) {
+async function unrenderPagesOutsideBuffer(bufferRange: { startPage: number; endPage: number }) {
   const { startPage, endPage } = bufferRange
   const currentPages = visiblePages
 
   currentPages.forEach(async (pageNumber) => {
-    if (pageNumber < startPage || pageNumber > endPage) await unloadPage(pageNumber)
+    if (pageNumber < startPage || pageNumber > endPage) await unrenderPage(pageNumber)
   })
 }
 
-async function loadPagesInsideBuffer(bufferRange: { startPage: number; endPage: number }) {
+async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage: number }) {
   const { startPage, endPage } = bufferRange
   for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
-    if (!visiblePages.includes(pageNumber)) await loadPage(pageNumber)
+    if (!visiblePages.includes(pageNumber)) await renderPage(pageNumber)
   }
 }
 </script>
 
 <template>
   <div>{{ currentPage }}</div>
-  <div ref="pdfContainer" class="viewer is-flex-grow-1">
-    <div v-for="pageNumber in totalPages" :key="pageNumber">
-      <canvas ref="pdfPages" class="page-canvas" :data-page="pageNumber"></canvas>
+  <div
+    class="outer-container is-flex-grow-1 is-flex is-justify-content-center"
+    :class="!isLoaded ? 'is-invisible' : ''"
+  >
+    <div ref="pdfContainer" class="viewer" :style="'--scale-factor:' + scaleFactor">
+      <div v-for="pageNumber in totalPages" :key="pageNumber" class="page-container">
+        <canvas ref="pdfPages" class="page-canvas" :data-page="pageNumber"></canvas>
+        <div ref="pdfTextLayer" class="text-layer"></div>
+      </div>
     </div>
+  </div>
+  <div v-show="!isLoaded" class="pageloader is-active">
+    <progress class="progress is-primary" max="100"></progress>
   </div>
 </template>
 
 <style scoped>
-.viewer {
-  overflow: scroll;
+.is-invisible {
+  display: none !important;
+}
+.outer-container {
+  overflow: auto;
+  height: 1em;
+}
+
+.pageloader {
   height: 1em;
 }
 
 .viewer::-webkit-scrollbar {
   width: auto;
+}
+
+/* TODO: Move to own file */
+* {
+  padding: 0;
+  margin: 0;
+}
+
+.page-container {
+  direction: ltr;
+  position: relative;
+  overflow: visible;
+  background-clip: content-box;
+  background-color: rgba(255, 255, 255, 1);
+}
+
+.page-canvas {
+  user-select: none;
+}
+
+.text-layer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.25;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+}
+
+.text-layer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.text-layer span.markedContent {
+  top: 0;
+  height: 0;
+}
+.text-layer br::selection {
+  background: transparent;
+}
+
+.text-layer ::selection {
+  background: rgba(0, 0, 255, 1);
 }
 </style>

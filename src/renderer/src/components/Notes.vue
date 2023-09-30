@@ -121,7 +121,7 @@ function insertTab(event: Event) {
 
 <style scoped>
 .textarea {
-  overflow: scroll;
+  overflow: auto;
 }
 
 .textarea:not([rows]) {

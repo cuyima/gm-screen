@@ -54,12 +54,11 @@ $notification-padding: 0.75rem 1.5rem 0.5rem 0.5rem;
   height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   width: 0px;
-}
+} */
 
 h1,
 h2,
@@ -85,4 +84,8 @@ h6 {
 
 .panel {
   background-color: $scheme-main;
+}
+
+html {
+  overflow: hidden;
 }

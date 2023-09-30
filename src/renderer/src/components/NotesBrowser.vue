@@ -98,7 +98,7 @@ async function deleteFile(file: string) {
   height: 30%;
 }
 .file-container {
-  overflow-y: scroll;
+  overflow-y: auto;
   height: 1em;
 }
 .is-file-name {

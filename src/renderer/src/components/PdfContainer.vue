@@ -85,12 +85,12 @@ async function openFile() {
         </ul>
       </span>
     </div>
-    <Suspense><PdfViewer v-if="selectedFile" /></Suspense>
+    <PdfViewer v-if="selectedFile" />
   </div>
 </template>
 
 <style scoped>
 .overflow {
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 </style>

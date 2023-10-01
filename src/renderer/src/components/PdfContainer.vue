@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 import PdfViewer from './PdfViewer.vue'
+import PdfToolbar from './PdfToolbar.vue'
 
 const store = useWsStore()
 
@@ -85,7 +86,10 @@ async function openFile() {
         </ul>
       </span>
     </div>
-    <PdfViewer v-if="selectedFile" />
+    <div v-if="selectedFile" class="is-flex is-flex-direction-column is-flex-grow-1">
+      <PdfToolbar />
+      <PdfViewer />
+    </div>
   </div>
 </template>
 

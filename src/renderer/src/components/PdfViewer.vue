@@ -9,12 +9,12 @@ import Loader from './Loader.vue'
 const wsStore = useWsStore()
 const pdfStore = usePdfStore()
 const selectedFile = computed(() => wsStore.selectedFile)
-const currentPage = computed(() => pdfStore.currentPage)
 const currentPageBuffer = computed(() => calculateBufferRange(pdfStore.currentPage))
+const currentPage = computed(() => pdfStore.currentPage)
+const totalPages = computed(() => pdfStore.totalPages)
 const pdfContainer = ref<HTMLDivElement>()
 const pdfPages = ref<HTMLCanvasElement[]>([])
 const pdfTextLayer = ref<HTMLDivElement[]>([])
-const totalPages = ref<number>(0)
 const isLoaded = ref<boolean>(false)
 
 const pages: PDFPageProxy[] = []
@@ -52,9 +52,27 @@ watch(selectedFile, async () => {
   }
 })
 
+watch(currentPage, () => {
+  const targetPage = pdfPages.value[pdfStore.currentPage - 1]
+  if (targetPage) scrollElementIntoViewIfNeeded(targetPage)
+})
+
 watch(currentPageBuffer, async () => {
   bufferPages()
 })
+
+function scrollElementIntoViewIfNeeded(element: HTMLCanvasElement) {
+  const parent = pdfContainer.value
+  if (!parent) return
+
+  const elementRect = element.getBoundingClientRect()
+  const parentRect = parent.getBoundingClientRect()
+  console.log(elementRect.top + '   ' + parentRect.bottom)
+  console.log(elementRect.bottom + '   ' + parentRect.top)
+
+  if (elementRect.top < parentRect.top || elementRect.bottom < parentRect.bottom)
+    element.scrollIntoView({ block: 'start' })
+}
 
 async function unloadPdf() {
   if (pdf) await pdf.destroy()
@@ -96,7 +114,7 @@ async function initialLoad() {
 async function loadPDF() {
   const loadingTask = pdfjsLib.getDocument(selectedFile.value)
   pdf = await loadingTask.promise
-  totalPages.value = pdf.numPages
+  pdfStore.totalPages = pdf.numPages
   await createPages()
 }
 
@@ -231,7 +249,6 @@ async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage
 </script>
 
 <template>
-  <div>{{ currentPage }}</div>
   <div
     class="outer-container is-flex-grow-1 is-flex is-justify-content-center"
     :class="!isLoaded ? 'is-invisible' : ''"

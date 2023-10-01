@@ -4,6 +4,7 @@ import { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 import * as pdfjsLib from 'pdfjs-dist'
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { usePdfStore } from '@renderer/stores/PdfStore'
+import Loader from './Loader.vue'
 
 const wsStore = useWsStore()
 const pdfStore = usePdfStore()
@@ -238,12 +239,11 @@ async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage
       </div>
     </div>
   </div>
-  <div v-show="!isLoaded" class="pageloader is-active">
-    <progress class="progress is-primary" max="100"></progress>
-  </div>
+  <Loader :class="isLoaded ? 'is-invisible' : ''" />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../assets/css/pdf-viewer.scss';
 .is-invisible {
   display: none !important;
 }
@@ -252,62 +252,7 @@ async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage
   height: 1em;
 }
 
-.pageloader {
-  height: 1em;
-}
-
 .viewer::-webkit-scrollbar {
   width: auto;
-}
-
-/* TODO: Move to own file */
-* {
-  padding: 0;
-  margin: 0;
-}
-
-.page-container {
-  direction: ltr;
-  position: relative;
-  overflow: visible;
-  background-clip: content-box;
-  background-color: rgba(255, 255, 255, 1);
-}
-
-.page-canvas {
-  user-select: none;
-}
-
-.text-layer {
-  position: absolute;
-  text-align: initial;
-  inset: 0;
-  overflow: hidden;
-  opacity: 0.25;
-  line-height: 1;
-  text-size-adjust: none;
-  forced-color-adjust: none;
-  transform-origin: 0 0;
-  z-index: 2;
-}
-
-.text-layer :is(span, br) {
-  color: transparent;
-  position: absolute;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0% 0%;
-}
-
-.text-layer span.markedContent {
-  top: 0;
-  height: 0;
-}
-.text-layer br::selection {
-  background: transparent;
-}
-
-.text-layer ::selection {
-  background: rgba(0, 0, 255, 1);
 }
 </style>

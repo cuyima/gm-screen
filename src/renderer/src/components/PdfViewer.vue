@@ -5,12 +5,12 @@ import * as pdfjsLib from 'pdfjs-dist'
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { usePdfStore } from '@renderer/stores/PdfStore'
 import Loader from './Loader.vue'
+import PdfToolbar from './PdfToolbar.vue'
 
 const wsStore = useWsStore()
 const pdfStore = usePdfStore()
 const selectedFile = computed(() => wsStore.selectedFile)
 const currentPageBuffer = computed(() => calculateBufferRange(pdfStore.currentPage))
-const currentPage = computed(() => pdfStore.currentPage)
 const totalPages = computed(() => pdfStore.totalPages)
 const pdfContainer = ref<HTMLDivElement>()
 const pdfPages = ref<HTMLCanvasElement[]>([])
@@ -19,7 +19,7 @@ const isLoaded = ref<boolean>(false)
 
 const pages: PDFPageProxy[] = []
 const visiblePages: number[] = []
-const scaleFactor = 1.5
+const scaleFactor = 1.5 //computed(() => pdfStore.currentZoom)
 
 let pdf: PDFDocumentProxy
 let observer: IntersectionObserver
@@ -52,26 +52,13 @@ watch(selectedFile, async () => {
   }
 })
 
-watch(currentPage, () => {
-  const targetPage = pdfPages.value[pdfStore.currentPage - 1]
-  if (targetPage) scrollElementIntoViewIfNeeded(targetPage)
-})
-
 watch(currentPageBuffer, async () => {
   bufferPages()
 })
 
-function scrollElementIntoViewIfNeeded(element: HTMLCanvasElement) {
-  const parent = pdfContainer.value
-  if (!parent) return
-
-  const elementRect = element.getBoundingClientRect()
-  const parentRect = parent.getBoundingClientRect()
-  console.log(elementRect.top + '   ' + parentRect.bottom)
-  console.log(elementRect.bottom + '   ' + parentRect.top)
-
-  if (elementRect.top < parentRect.top || elementRect.bottom < parentRect.bottom)
-    element.scrollIntoView({ block: 'start' })
+function scrollToPage() {
+  const element: HTMLCanvasElement = pdfPages.value[pdfStore.currentPage - 1]
+  element.scrollIntoView({ block: 'start' })
 }
 
 async function unloadPdf() {
@@ -93,6 +80,7 @@ async function unloadPdf() {
 }
 
 async function initialLoad() {
+  pdfStore.currentZoom = 1
   await loadPDF()
   initializeIntersectionObserver()
   if (pdfStore.currentPage) {
@@ -100,6 +88,7 @@ async function initialLoad() {
   } else {
     pdfStore.currentPage = 1
   }
+
   isLoaded.value = true
 
   let targetPage: HTMLCanvasElement
@@ -127,7 +116,7 @@ async function createPages() {
 
     const canvas = pdfPages.value[pageNumber - 1]
     if (!canvas) continue
-    const context = canvas.getContext('2d')
+    const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) continue
 
     const viewport = page.getViewport({ scale: scaleFactor })
@@ -146,9 +135,10 @@ async function bufferPages() {
     console.log(
       `Rendering pages ${currentPageBuffer.value.startPage} to ${currentPageBuffer.value.endPage}`
     )
+    const buffer = currentPageBuffer.value
+    await unrenderPagesOutsideBuffer(buffer)
+    await renderPagesInsideBuffer(buffer)
     isRenderScheduled = false
-    await unrenderPagesOutsideBuffer(currentPageBuffer.value)
-    await renderPagesInsideBuffer(currentPageBuffer.value)
   }, 500)
 }
 
@@ -158,7 +148,7 @@ async function renderPage(pageNumber: number) {
 
   //console.log(`Rendering page ${pageNumber}`)
   const canvas = pdfPages.value[pageNumber - 1]
-  const context = canvas.getContext('2d')
+  const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) return
 
   const viewport = page.getViewport({ scale: scaleFactor })
@@ -198,7 +188,7 @@ async function unrenderPage(pageNumber: number) {
   if (!canvas) return
   const context = canvas.getContext('2d')
   if (context) context.clearRect(0, 0, canvas.width, canvas.height)
-  visiblePages.slice(visiblePages.indexOf(pageNumber))
+  visiblePages.splice(visiblePages.indexOf(pageNumber), 1)
 }
 
 function initializeIntersectionObserver() {
@@ -216,7 +206,7 @@ function initializeIntersectionObserver() {
         pdfStore.currentPage = pageNumber
       })
     },
-    { threshold: 0 }
+    { threshold: 0.5 }
   )
 
   pdfPages.value.forEach((page) => {
@@ -246,9 +236,14 @@ async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage
     if (!visiblePages.includes(pageNumber)) await renderPage(pageNumber)
   }
 }
+
+function updateZoom() {
+  //stub
+}
 </script>
 
 <template>
+  <PdfToolbar @update-page="scrollToPage" @update-zoom="updateZoom" />
   <div
     class="outer-container is-flex-grow-1 is-flex is-justify-content-center"
     :class="!isLoaded ? 'is-invisible' : ''"

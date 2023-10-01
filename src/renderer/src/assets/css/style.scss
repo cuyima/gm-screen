@@ -83,6 +83,13 @@ h6 {
   background-color: $scheme-main;
 }
 
+.toolbar-container {
+  background-color: $scheme-main;
+  border: 1px solid $border-light;
+  border-radius: $radius;
+  box-shadow: $shadow;
+}
+
 html {
   overflow: hidden;
 }

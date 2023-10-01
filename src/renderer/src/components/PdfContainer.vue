@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 import PdfViewer from './PdfViewer.vue'
-import PdfToolbar from './PdfToolbar.vue'
 
 const store = useWsStore()
 
@@ -66,7 +65,7 @@ async function openFile() {
 
 <template>
   <div class="box is-fluid is-flex is-flex-grow-1 is-flex-direction-column">
-    <div class="is-flex mb-2">
+    <div class="is-flex">
       <button class="button mr-1 p-2 is-family-secondary" @click="openFile">Open File</button>
       <span ref="tabs" class="tabs overflow" @wheel="scroll">
         <ul>
@@ -87,7 +86,6 @@ async function openFile() {
       </span>
     </div>
     <div v-if="selectedFile" class="is-flex is-flex-direction-column is-flex-grow-1">
-      <PdfToolbar />
       <PdfViewer />
     </div>
   </div>

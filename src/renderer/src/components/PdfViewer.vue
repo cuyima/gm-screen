@@ -10,6 +10,7 @@ const wsStore = useWsStore()
 const pdfStore = usePdfStore()
 const selectedFile = computed(() => wsStore.selectedFile)
 const currentPage = computed(() => pdfStore.currentPage)
+const currentPageBuffer = computed(() => calculateBufferRange(pdfStore.currentPage))
 const pdfContainer = ref<HTMLDivElement>()
 const pdfPages = ref<HTMLCanvasElement[]>([])
 const pdfTextLayer = ref<HTMLDivElement[]>([])
@@ -22,6 +23,7 @@ const scaleFactor = 1.5
 
 let pdf: PDFDocumentProxy
 let observer: IntersectionObserver
+let isRenderScheduled = false
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
@@ -50,8 +52,8 @@ watch(selectedFile, async () => {
   }
 })
 
-watch(currentPage, async () => {
-  renderPages(currentPage.value)
+watch(currentPageBuffer, async () => {
+  bufferPages()
 })
 
 async function unloadPdf() {
@@ -76,9 +78,9 @@ async function initialLoad() {
   await loadPDF()
   initializeIntersectionObserver()
   if (pdfStore.currentPage) {
-    await renderPages(pdfStore.currentPage)
+    await bufferPages()
   } else {
-    await renderPages(1)
+    pdfStore.currentPage = 1
   }
   isLoaded.value = true
 
@@ -119,17 +121,24 @@ async function createPages() {
   }
 }
 
-async function renderPages(pageNumber: number) {
-  const buffer = calculateBufferRange(pageNumber)
-  await renderPagesInsideBuffer(buffer)
-  await unrenderPagesOutsideBuffer(buffer)
+async function bufferPages() {
+  if (isRenderScheduled) return
+  isRenderScheduled = true
+  setTimeout(async () => {
+    console.log(
+      `Rendering pages ${currentPageBuffer.value.startPage} to ${currentPageBuffer.value.endPage}`
+    )
+    isRenderScheduled = false
+    await unrenderPagesOutsideBuffer(currentPageBuffer.value)
+    await renderPagesInsideBuffer(currentPageBuffer.value)
+  }, 500)
 }
 
 async function renderPage(pageNumber: number) {
-  const page = pages[pageNumber]
+  const page = pages[pageNumber - 1]
   if (!page) return
 
-  console.log(`Rendering page ${pageNumber}`)
+  //console.log(`Rendering page ${pageNumber}`)
   const canvas = pdfPages.value[pageNumber - 1]
   const context = canvas.getContext('2d')
   if (!context) return
@@ -163,9 +172,9 @@ async function renderPage(pageNumber: number) {
 }
 
 async function unrenderPage(pageNumber: number) {
-  const page = pages[pageNumber]
+  const page = pages[pageNumber - 1]
   if (!page) return
-  console.log(`Unrendering page ${pageNumber}`)
+  //console.log(`Unrendering page ${pageNumber}`)
   page.cleanup()
   const canvas = pdfPages.value[pageNumber]
   if (!canvas) return

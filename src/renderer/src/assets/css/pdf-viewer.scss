@@ -9,12 +9,9 @@
     overflow: visible;
     background-clip: content-box;
     background-color: rgba(255, 255, 255, 1);
-  }
-  
-  .page-canvas {
     user-select: none;
   }
-  
+    
   .text-layer {
     position: absolute;
     text-align: initial;
@@ -26,6 +23,7 @@
     forced-color-adjust: none;
     transform-origin: 0 0;
     z-index: 2;
+    user-select: none;
   }
   
   .text-layer :is(span, br) {
@@ -34,6 +32,7 @@
     white-space: pre;
     cursor: text;
     transform-origin: 0% 0%;
+    user-select: text;
   }
   
   .text-layer span.markedContent {

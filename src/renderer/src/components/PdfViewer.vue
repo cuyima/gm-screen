@@ -57,7 +57,7 @@ watch(currentPage, async () => {
 async function unloadPdf() {
   if (pdf) await pdf.destroy()
   if (observer) observer.disconnect()
-
+  visiblePages.length = 0
   pdfTextLayer.value.forEach((element) => {
     while (element.firstChild) {
       element.removeChild(element.firstChild)
@@ -73,34 +73,29 @@ async function unloadPdf() {
 }
 
 async function initialLoad() {
-  loadPDF()
-    .then(() => {
-      initializeIntersectionObserver()
-      if (pdfStore.currentPage) {
-        return renderPages(pdfStore.currentPage)
-      } else {
-        return renderPages(1)
-      }
-    })
-    .then(() => {
-      isLoaded.value = true
-      let targetPage: HTMLCanvasElement
-      if (pdfStore.currentPage) {
-        targetPage = pdfPages.value[pdfStore.currentPage - 1]
-      } else {
-        targetPage = pdfPages.value[0]
-      }
-      if (targetPage) targetPage.scrollIntoView({ block: 'start' })
-    })
+  await loadPDF()
+  initializeIntersectionObserver()
+  if (pdfStore.currentPage) {
+    await renderPages(pdfStore.currentPage)
+  } else {
+    await renderPages(1)
+  }
+  isLoaded.value = true
+
+  let targetPage: HTMLCanvasElement
+  if (pdfStore.currentPage) {
+    targetPage = pdfPages.value[pdfStore.currentPage - 1]
+  } else {
+    targetPage = pdfPages.value[0]
+  }
+  if (targetPage) targetPage.scrollIntoView({ block: 'start' })
 }
 
 async function loadPDF() {
   const loadingTask = pdfjsLib.getDocument(selectedFile.value)
-  loadingTask.promise.then((lt) => {
-    pdf = lt
-    totalPages.value = pdf.numPages
-    return createPages()
-  })
+  pdf = await loadingTask.promise
+  totalPages.value = pdf.numPages
+  await createPages()
 }
 
 async function createPages() {

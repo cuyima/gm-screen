@@ -251,8 +251,4 @@ async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage
   overflow: auto;
   height: 1em;
 }
-
-.viewer::-webkit-scrollbar {
-  width: auto;
-}
 </style>

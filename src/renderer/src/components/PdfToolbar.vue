@@ -11,6 +11,9 @@ const currentZoom = computed(() => pdfStore.currentZoom)
 const zoomInput = ref<number>(pdfStore.currentZoom * 100)
 const searchString = ref<string>('')
 
+const maxZoom = 5
+const minZoom = 0.25
+
 watch(currentPage, () => {
   pageInput.value = currentPage.value
 })
@@ -46,12 +49,12 @@ function updateZoom() {
 }
 
 function incrementZoom() {
-  pdfStore.currentZoom = Math.min(pdfStore.currentZoom + 0.25, 2)
+  pdfStore.currentZoom = Math.min(pdfStore.currentZoom + 0.25, maxZoom)
   emit('updateZoom')
 }
 
 function decrementZoom() {
-  pdfStore.currentZoom = Math.max(pdfStore.currentZoom - 0.25, 0.25)
+  pdfStore.currentZoom = Math.max(pdfStore.currentZoom - 0.25, minZoom)
   emit('updateZoom')
 }
 </script>
@@ -67,7 +70,7 @@ function decrementZoom() {
         <span class="icon is-right clear pr-2">
           <button
             v-if="searchString != ''"
-            class="delete is-small"
+            class="delete is-tiny"
             @click="searchString = ''"
           ></button>
         </span>
@@ -106,7 +109,7 @@ function decrementZoom() {
       <div class="zoom-control buttons has-addons are-small">
         <button
           class="button"
-          :class="pdfStore.currentZoom == 0.25 ? 'is-static' : ''"
+          :class="pdfStore.currentZoom == minZoom ? 'is-static' : ''"
           @click="decrementZoom"
         >
           <span class="icon"><i class="fas fa-search-minus"></i> </span>
@@ -114,7 +117,7 @@ function decrementZoom() {
         <input v-model="zoomInput" class="toolbar-input button" @keydown.enter="updateZoom" />
         <button
           class="button"
-          :class="pdfStore.currentZoom == 2 ? 'is-static' : ''"
+          :class="pdfStore.currentZoom == maxZoom ? 'is-static' : ''"
           @click="incrementZoom"
         >
           <span class="icon"><i class="fas fa-search-plus"></i> </span>
@@ -134,6 +137,7 @@ function decrementZoom() {
 
 .toolbar-container {
   padding: 0.25rem;
+  z-index: 1;
 }
 
 .clear {

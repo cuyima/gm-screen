@@ -41,32 +41,11 @@ function closeFile(index: number) {
     store.selectedFile = fPaths[fPaths.length - 1]
   }
 }
-
-async function openFile() {
-  const args = {
-    filter: { name: 'PDFs', extensions: ['pdf'] },
-    isFile: true
-  }
-  const files = await window.electron.ipcRenderer.invoke('open-explorer', args)
-  if (files.canceled) return
-
-  const currentLen = currentFiles.value.length
-
-  files.filePaths.forEach((path: string) => {
-    path = window.api.pathToFileURL(path)
-    if (!currentFiles.value.includes(path)) currentFiles.value.push(path)
-  })
-
-  if (currentLen == currentFiles.value.length) return
-
-  store.selectedFile = currentFiles.value[currentFiles.value.length - files.filePaths.length]
-}
 </script>
 
 <template>
-  <div class="box is-fluid is-flex is-flex-grow-1 is-flex-direction-column">
+  <div class="box is-fluid is-flex is-flex-grow-1 is-flex-direction-column pt-2">
     <div class="is-flex">
-      <button class="button mr-1 p-2 is-family-secondary" @click="openFile">Open File</button>
       <span ref="tabs" class="tabs overflow" @wheel="scroll">
         <ul>
           <li
@@ -94,5 +73,9 @@ async function openFile() {
 <style scoped>
 .overflow {
   overflow-x: auto;
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
 </style>

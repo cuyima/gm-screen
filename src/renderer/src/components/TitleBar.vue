@@ -5,6 +5,7 @@ import { useWsStore } from '@renderer/stores/WorkspaceStore'
 const store = useWsStore()
 const appTitle = ref('')
 const recent = computed(() => store.recentWorkspaces)
+const currentFiles = computed(() => store.currentFiles)
 
 onMounted(async () => {
   appTitle.value = await window.electron.ipcRenderer.invoke('get-app-title')
@@ -26,6 +27,26 @@ async function openFolder() {
   if (folders.canceled) return
   store.addWorkspace(folders.filePaths[0])
 }
+
+async function openFile() {
+  const args = {
+    filter: { name: 'PDFs', extensions: ['pdf'] },
+    isFile: true
+  }
+  const files = await window.electron.ipcRenderer.invoke('open-explorer', args)
+  if (files.canceled) return
+
+  const currentLen = currentFiles.value.length
+
+  files.filePaths.forEach((path: string) => {
+    path = window.api.pathToFileURL(path)
+    if (!currentFiles.value.includes(path)) currentFiles.value.push(path)
+  })
+
+  if (currentLen == currentFiles.value.length) return
+
+  store.selectedFile = currentFiles.value[currentFiles.value.length - files.filePaths.length]
+}
 </script>
 
 <template>
@@ -34,6 +55,7 @@ async function openFolder() {
     <div class="navbar-item has-dropdown is-hoverable">
       <a class="navbar-link"> Workspace </a>
       <div class="navbar-dropdown p-0">
+        <a class="navbar-item" @click="openFile"> Open File... </a>
         <a class="navbar-item" @click="openFolder"> Open Folder... </a>
         <hr class="navbar-divider m-0" />
         <a

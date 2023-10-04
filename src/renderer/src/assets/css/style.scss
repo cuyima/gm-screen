@@ -93,3 +93,12 @@ h6 {
 html {
   overflow: hidden;
 }
+
+.is-tiny.delete {
+  height: 12px;
+  max-height: 12px;
+  max-width: 12px;
+  min-height: 12px;
+  min-width: 12px;
+  width: 12px;
+}

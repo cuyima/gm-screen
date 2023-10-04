@@ -19,7 +19,7 @@ const isLoaded = ref<boolean>(false)
 
 const pages: PDFPageProxy[] = []
 const visiblePages: number[] = []
-const scaleFactor = 1.5 //computed(() => pdfStore.currentZoom)
+const scaleFactor = computed(() => pdfStore.currentZoom)
 
 let pdf: PDFDocumentProxy
 let observer: IntersectionObserver
@@ -80,7 +80,7 @@ async function unloadPdf() {
 }
 
 async function initialLoad() {
-  pdfStore.currentZoom = 1
+  pdfStore.currentZoom = 1.5
   await loadPDF()
   initializeIntersectionObserver()
   if (pdfStore.currentPage) {
@@ -119,7 +119,7 @@ async function createPages() {
     const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) continue
 
-    const viewport = page.getViewport({ scale: scaleFactor })
+    const viewport = page.getViewport({ scale: scaleFactor.value })
     canvas.height = viewport.height
     canvas.width = viewport.width
 
@@ -151,7 +151,7 @@ async function renderPage(pageNumber: number) {
   const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) return
 
-  const viewport = page.getViewport({ scale: scaleFactor })
+  const viewport = page.getViewport({ scale: scaleFactor.value })
   const renderContext = {
     canvasContext: context,
     viewport: viewport
@@ -232,18 +232,36 @@ async function unrenderPagesOutsideBuffer(bufferRange: { startPage: number; endP
 
 async function renderPagesInsideBuffer(bufferRange: { startPage: number; endPage: number }) {
   const { startPage, endPage } = bufferRange
+
+  const currentPages = visiblePages
   for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
-    if (!visiblePages.includes(pageNumber)) await renderPage(pageNumber)
+    if (!currentPages.includes(pageNumber)) await renderPage(pageNumber)
   }
 }
 
-function updateZoom() {
-  //stub
+async function redraw() {
+  await createPages()
+  visiblePages.forEach((pageNumber) => {
+    const page = pages[pageNumber - 1]
+    if (!page) return
+
+    //console.log(`Rendering page ${pageNumber}`)
+    const canvas = pdfPages.value[pageNumber - 1]
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    if (!context) return
+
+    const viewport = page.getViewport({ scale: scaleFactor.value })
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport
+    }
+    page.render(renderContext)
+  })
 }
 </script>
 
 <template>
-  <PdfToolbar @update-page="scrollToPage" @update-zoom="updateZoom" />
+  <PdfToolbar @update-page="scrollToPage" @update-zoom="redraw" />
   <div
     class="outer-container is-flex-grow-1 is-flex is-justify-content-center"
     :class="!isLoaded ? 'is-invisible' : ''"

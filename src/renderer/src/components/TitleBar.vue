@@ -53,7 +53,7 @@ async function openFile() {
   <nav class="navbar has-shadow" role="navigation">
     <img class="icon" src="../assets/img/icon.png" />
     <div class="navbar-item has-dropdown is-hoverable">
-      <a class="navbar-link"> Workspace </a>
+      <a class="navbar-link"> File </a>
       <div class="navbar-dropdown p-0">
         <a class="navbar-item" @click="openFile"> Open File... </a>
         <a class="navbar-item" @click="openFolder"> Open Folder... </a>
@@ -70,7 +70,7 @@ async function openFile() {
     </div>
     <a class="navbar-item pl-1" @click="reload">Reload</a>
     <a class="navbar-item" @click="openDevTools">DevTools</a>
-    <a class="navbar-item app-title">
+    <a class="navbar-item app-title is-size-6">
       <span>{{ appTitle }} </span>
       <span v-if="store.currentWorkspace" class="pl-1"> - {{ store.currentWorkspace }}</span>
     </a>
@@ -101,6 +101,7 @@ async function openFile() {
   transform: translate(50%, 10%);
   right: 50%;
   opacity: 50%;
+  margin-top: 2px;
 }
 
 .is-opacity-low {

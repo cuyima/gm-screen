@@ -59,8 +59,9 @@ const isLeftPaneVisible = computed(
 }
 
 .left-pane {
-  min-width: 25%;
-  max-width: 40%;
+  /*   min-width: 25%;
+  max-width: 40%; */
+  width: 40%;
 }
 
 .right-pane {

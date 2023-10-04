@@ -44,25 +44,21 @@ function closeFile(index: number) {
 </script>
 
 <template>
-  <div class="box is-fluid is-flex is-flex-grow-1 is-flex-direction-column pt-2">
-    <div class="is-flex">
-      <span ref="tabs" class="tabs overflow" @wheel="scroll">
-        <ul>
-          <li
-            v-for="(source, index) in currentFiles"
-            :key="source"
-            :class="{ 'is-active': source == selectedFile }"
-            class="is-flex is-align-items-center"
-          >
-            <a class="px-2">
-              <span class="pr-2" @click="store.selectedFile = source">{{
-                getFileName(source)
-              }}</span>
-              <button class="delete is-small" @click="closeFile(index)"></button>
-            </a>
-          </li>
-        </ul>
-      </span>
+  <div class="box is-flex is-flex-direction-column pt-2">
+    <div ref="tabs" class="tabs overflow mb-0" @wheel="scroll">
+      <ul>
+        <li
+          v-for="(source, index) in currentFiles"
+          :key="source"
+          :class="{ 'is-active': source == selectedFile }"
+          class="is-flex is-align-items-center"
+        >
+          <a class="px-2">
+            <span class="pr-2" @click="store.selectedFile = source">{{ getFileName(source) }}</span>
+            <button class="delete is-small" @click="closeFile(index)"></button>
+          </a>
+        </li>
+      </ul>
     </div>
     <div v-if="selectedFile" class="is-flex is-flex-direction-column is-flex-grow-1">
       <PdfViewer />
@@ -72,7 +68,7 @@ function closeFile(index: number) {
 
 <style scoped>
 .overflow {
-  overflow-x: auto;
+  overflow-x: scroll;
 }
 
 ::-webkit-scrollbar {

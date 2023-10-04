@@ -9,7 +9,7 @@ const pageInput = ref<number>(pdfStore.currentPage)
 
 const currentZoom = computed(() => pdfStore.currentZoom)
 const zoomInput = ref<number>(pdfStore.currentZoom * 100)
-const searchString = ref<string>('')
+//const searchString = ref<string>('')
 
 const maxZoom = 5
 const minZoom = 0.25
@@ -60,8 +60,8 @@ function decrementZoom() {
 </script>
 
 <template>
-  <div class="toolbar-container is-flex is-align-items-center mb-1 px-2">
-    <div class="is-flex">
+  <div class="toolbar-container is-flex is-align-items-center is-justify-content-center mb-0 px-2">
+<!--     <div class="is-flex">
       <div class="control has-icons-left">
         <input v-model="searchString" class="input is-small" type="text" placeholder="Search" />
         <span class="icon is-left">
@@ -83,9 +83,9 @@ function decrementZoom() {
           <span class="icon"> <i class="fas fa-chevron-right"></i> </span>
         </button>
       </div>
-    </div>
-    <div class="is-flex-grow-1"></div>
-    <div>
+    </div> -->
+<!--     <div class="is-flex-grow-1"></div>
+ -->    <div>
       <div class="page-control buttons has-addons are-small">
         <button
           class="button"
@@ -124,8 +124,8 @@ function decrementZoom() {
         </button>
       </div>
     </div>
-    <div class="is-flex-grow-3"></div>
-  </div>
+<!--     <div class="is-flex-grow-3"></div>
+ -->  </div>
 </template>
 
 <style scoped>

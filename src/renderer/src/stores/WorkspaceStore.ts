@@ -7,7 +7,12 @@ export const useWsStore = defineStore('workspace', {
       recentWorkspaces: [] as string[],
       selectedFile: '' as string,
       currentFiles: [] as string[],
-      currentNote: '' as string
+      currentNote: '' as string,
+      showNotes: true as boolean,
+      showDice: true as boolean,
+      showTimer: false as boolean,
+      showCombat: false as boolean,
+      lastWidth: 450 as number
     }
   },
   actions: {

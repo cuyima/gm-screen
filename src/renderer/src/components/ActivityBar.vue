@@ -43,7 +43,11 @@ function toggleTimer() {
       </button>
     </div>
     <div class="spacer is-flex-grow-1"></div>
-    <div></div>
+    <div class="is-flex is-flex-direction-column">
+      <button class="button is-activity">
+        <span class="icon fa-2x"> <i class="fas fa-cog"></i></span>
+      </button>
+    </div>
   </div>
 </template>
 

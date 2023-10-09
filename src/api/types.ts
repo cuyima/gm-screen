@@ -4,4 +4,5 @@ export interface FileSystemAPI {
   pathToFileURL(filePath: string): string
   saveFile(filePath: string, file: { title: string; content: string }): Promise<void>
   deleteFile(filePath: string, fileName: string): Promise<void>
+  getHash(dataArray: Uint8Array): string
 }

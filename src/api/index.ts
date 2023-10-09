@@ -2,6 +2,7 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import { FileSystemAPI } from './types'
 import { pathToFileURL } from 'url'
+import { createHash } from 'crypto'
 const allowedExtensions = ['.txt', '.md']
 
 export type { FileSystemAPI } from './types'
@@ -31,5 +32,10 @@ export const fileSystemAPI: FileSystemAPI = {
   },
   deleteFile: async function (filePath: string, fileName: string): Promise<void> {
     await fs.rm(path.join(filePath, fileName))
+  },
+  getHash: function (dataArray: Uint8Array): string {
+    const sha3Hash = createHash('sha256')
+    sha3Hash.update(dataArray)
+    return sha3Hash.digest('hex')
   }
 }

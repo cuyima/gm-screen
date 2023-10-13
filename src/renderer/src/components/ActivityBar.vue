@@ -54,26 +54,7 @@ function toggleTimer() {
 <style lang="scss">
 @import '../assets/css/variables.scss';
 
-.button.is-activity {
-  border: unset;
-  margin-bottom: 0.75rem;
-  margin-top: 0.75rem;
-  color: $grey-dark;
-}
-
-.button.is-activity:hover {
-  color: $gm-gold;
-  border: none;
-}
-
-.button.is-activity:focus {
-  border: none;
-}
-.button.is-activity:focus:not(:active) {
-  box-shadow: unset;
-}
-
 .box {
-  width: fit-content;
+  width: 2.5em;
 }
 </style>

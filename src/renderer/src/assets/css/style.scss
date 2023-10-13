@@ -41,13 +41,6 @@ h6 {
   background-color: $scheme-main;
 }
 
-.toolbar-container {
-  background-color: $scheme-main;
-  border: 1px solid $border-light;
-  border-radius: $radius;
-  box-shadow: $shadow;
-}
-
 html {
   overflow: hidden;
 }
@@ -63,4 +56,29 @@ html {
 
 .box {
   width: 100%;
+}
+
+.button.is-activity {
+  border: unset;
+  margin-bottom: 0.75rem;
+  margin-top: 0.75rem;
+  color: $grey-dark;
+}
+
+.button.is-activity:hover {
+  color: $gm-gold;
+  border: none;
+}
+
+.button.is-activity:focus {
+  border: none;
+}
+.button.is-activity:focus:not(:active) {
+  box-shadow: unset;
+}
+
+.button.is-activity.is-static {
+  color: $grey-dark;
+  opacity: 70%;
+  background: unset;
 }

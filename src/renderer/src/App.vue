@@ -2,10 +2,10 @@
 import { computed, ref } from 'vue'
 import TitleBar from '@renderer/components/TitleBar.vue'
 import DiceRoller from '@renderer/components/DiceRoller.vue'
-import PdfContainer from '@renderer/components/PdfContainer.vue'
 import NotesContainer from './components/NotesContainer.vue'
 import ActivityBar from './components/ActivityBar.vue'
 import { useWsStore } from './stores/WorkspaceStore'
+import PdfViewer from './components/PdfViewer.vue'
 
 const store = useWsStore()
 const leftPane = ref<HTMLDivElement>()
@@ -19,7 +19,7 @@ const isLeftPaneVisible = computed(
 <template>
   <TitleBar />
   <div class="is-flex is-flex-grow-1 app-panels">
-    <div class="activity-bar is-flex app-panel is-flex-direction-column">
+    <div class="is-flex app-panel is-flex-direction-column">
       <ActivityBar />
     </div>
     <div
@@ -32,8 +32,8 @@ const isLeftPaneVisible = computed(
       <NotesContainer v-if="store.showNotes" />
       <NotesContainer v-if="store.showCombat" />
     </div>
-    <div v-if="isLeftPaneVisible" class="app-panel divider px-1 mx-0" draggable="false"></div>
-    <div ref="rightPane" class="app-panel is-flex is-flex-grow-1 right-pane"><PdfContainer /></div>
+    <div v-if="isLeftPaneVisible" class="app-panel divider" draggable="false"></div>
+    <div ref="rightPane" class="app-panel is-flex is-flex-grow-1 right-pane"><PdfViewer /></div>
   </div>
 </template>
 
@@ -44,24 +44,17 @@ const isLeftPaneVisible = computed(
   width: 100%;
 }
 .app-panel {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
-}
-
-.app-panel:nth-child(2):not(:last-child) {
-  padding-right: 0;
-}
-.app-panel:nth-child(4) {
-  padding-left: 0;
+  margin-left: 0.15rem;
+  margin-right: 0.15rem;
 }
 .divider {
+  margin: 0;
   cursor: col-resize;
+  padding: 0.1rem;
 }
 
 .left-pane {
-  /*   min-width: 25%;
-  max-width: 40%; */
-  width: 40%;
+  width: 35%;
 }
 
 .right-pane {

@@ -12,10 +12,38 @@ const pdfStore = usePdfStore()
 const selectedFile = computed(() => wsStore.selectedFile)
 const currentPageBuffer = computed(() => calculateBufferRange(pdfStore.currentPage))
 const totalPages = computed(() => pdfStore.totalPages)
+const isTwoPageMode = computed(() => pdfStore.isTwoPageMode)
 const pdfContainer = ref<HTMLDivElement>()
 const pdfPages = ref<HTMLCanvasElement[]>([])
 const pdfTextLayer = ref<HTMLDivElement[]>([])
 const isLoaded = ref<boolean>(false)
+
+const groupedPageContainers = computed(() => {
+  // Calculate grouped page containers based on isGrouped condition
+  if (isTwoPageMode.value) {
+    // Group pages in twos
+    const pages = totalPages
+    const groups: number[][] = []
+    for (let i = 0; i < pages.value; i += 2) {
+      const group: number[] = []
+      if (i < pages.value) {
+        group.push(i + 1) // Add first page of the pair
+      }
+      if (i + 1 < pages.value) {
+        group.push(i + 2) // Add second page of the pair
+      }
+      groups.push(group)
+    }
+    return groups
+  } else {
+    // Not grouped, each page is in its own group
+    const pages: number[] = []
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i)
+    }
+    return pages
+  }
+})
 
 const pages: PDFPageProxy[] = []
 const visiblePages: number[] = []
@@ -261,19 +289,28 @@ async function redraw() {
 </script>
 
 <template>
-  <PdfToolbar @update-page="scrollToPage" @update-zoom="redraw" />
-  <div
-    class="outer-container is-flex-grow-1 is-flex is-justify-content-center"
-    :class="!isLoaded ? 'is-invisible' : ''"
-  >
-    <div ref="pdfContainer" class="viewer" :style="'--scale-factor:' + scaleFactor">
-      <div v-for="pageNumber in totalPages" :key="pageNumber" class="page-container">
-        <canvas ref="pdfPages" class="page-canvas" :data-page="pageNumber"></canvas>
-        <div ref="pdfTextLayer" class="text-layer"></div>
+  <div class="box is-flex is-flex-grow-1 is-flex-direction-column p-1">
+    <div
+      class="outer-container is-flex-grow-1 is-flex is-justify-content-center"
+      :class="!isLoaded ? 'is-invisible' : ''"
+    >
+      <div ref="pdfContainer" class="viewer" :style="'--scale-factor:' + scaleFactor">
+        <div
+          v-for="(group, groupIndex) in groupedPageContainers"
+          :key="groupIndex"
+          class="page-group"
+        >
+          <!-- Render two page containers within each group -->
+          <div v-for="pageNumber in group" :key="pageNumber" class="page-container">
+            <canvas ref="pdfPages" class="page-canvas" :data-page="pageNumber"></canvas>
+            <div ref="pdfTextLayer" class="text-layer"></div>
+          </div>
+        </div>
       </div>
+      <Loader :class="isLoaded ? 'is-invisible' : ''" />
     </div>
   </div>
-  <Loader :class="isLoaded ? 'is-invisible' : ''" />
+  <PdfToolbar @update-page="scrollToPage" @update-zoom="redraw" @update-page-mode="redraw" />
 </template>
 
 <style scoped lang="scss">
@@ -284,5 +321,8 @@ async function redraw() {
 .outer-container {
   overflow: auto;
   height: 1em;
+}
+.box:not(:last-child) {
+  margin-bottom: unset;
 }
 </style>

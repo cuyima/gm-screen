@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PdfTabs from './PdfTabs.vue'
 import { useWsStore } from '@renderer/stores/WorkspaceStore'
 
 const store = useWsStore()
@@ -47,13 +48,20 @@ async function openFile() {
 
   store.selectedFile = currentFiles.value[currentFiles.value.length - files.filePaths.length]
 }
+
+function splitWorkspaceName() {
+  const parts = store.currentWorkspace.split(/[\\/]/)
+  return parts[parts.length - 1]
+}
 </script>
 
 <template>
-  <nav class="navbar has-shadow" role="navigation">
+  <nav class="navbar has-shadow is-align-items-center" role="navigation">
     <img class="icon" src="../assets/img/icon.png" />
     <div class="navbar-item has-dropdown is-hoverable">
-      <a class="navbar-link"> File </a>
+      <a class="navbar-link">
+        {{ store.currentWorkspace ? splitWorkspaceName() : 'Workspace' }}
+      </a>
       <div class="navbar-dropdown p-0">
         <a class="navbar-item" @click="openFile"> Open File... </a>
         <a class="navbar-item" @click="openFolder"> Open Folder... </a>
@@ -66,14 +74,12 @@ async function openFile() {
         >
           {{ ws }}
         </a>
+        <hr class="navbar-divider m-0" />
+        <a class="navbar-item" @click="reload">Reload</a>
+        <a class="navbar-item" @click="openDevTools">DevTools</a>
       </div>
     </div>
-    <a class="navbar-item pl-1" @click="reload">Reload</a>
-    <a class="navbar-item" @click="openDevTools">DevTools</a>
-    <a class="navbar-item app-title is-size-6">
-      <span>{{ appTitle }} </span>
-      <span v-if="store.currentWorkspace" class="pl-1"> - {{ store.currentWorkspace }}</span>
-    </a>
+    <PdfTabs />
     <a class="navbar-item filler" />
   </nav>
 </template>
@@ -82,6 +88,8 @@ async function openFile() {
 .filler {
   -webkit-app-region: drag;
   flex: 1 !important;
+  min-width: 160px;
+  height: 100%;
 }
 
 .navbar-item,
@@ -92,7 +100,6 @@ async function openFile() {
 .icon {
   -webkit-user-drag: none;
   margin-left: 0.25rem;
-  margin-top: 0.15rem;
 }
 
 .app-title {
